@@ -51,7 +51,7 @@ if __name__ == '__main__':
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     num_classes = len(helpers.LABEL_COLORS.keys())
-    unet = UNet(num_classes=num_classes).to(device)
+    unet = UNet(in_c=3, num_classes=num_classes).to(device)
 
     phase = 'segment'  # train | segment
 
@@ -62,21 +62,24 @@ if __name__ == '__main__':
             train_cities,
             'output/',
             device,
-            1,
-            15
+            2,
+            10
         )
     else:
-        test_img_path = 'data/SB/S/S.jpg'
-        test_img_mask_path = 'data/SB/S/S-mask.jpg'
+        # img_path = 'data/SB/S/images/0120.jpg'
+        # img_mask_path = 'data/SB/S/masks/0120.jpg'
+        img_path = 'data/SB/S/S.jpg'
+        img_mask_path = 'data/SB/S/S-mask.jpg'
 
         segmented = model.segment(
             unet,
-            'output/21-04-2024_19-29-16.pth',
-            test_img_path
+            'output/19-05-2024_14-25-03.pth',
+            device,
+            img_path
         )
 
         helpers.show_results(
-            test_img_path,
-            test_img_mask_path,
+            img_path,
+            img_mask_path,
             segmented
         )

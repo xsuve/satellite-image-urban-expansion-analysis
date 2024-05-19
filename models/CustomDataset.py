@@ -1,7 +1,6 @@
 import os
 import cv2
 import numpy as np
-import torch
 from torch.utils.data import Dataset
 import utils.helpers as helpers
 
@@ -16,9 +15,9 @@ class CustomDataset(Dataset):
     def __len__(self):
         return len(self.images)
 
-    def __getitem__(self, idx):
-        image = self.images[idx]
-        mask = self.masks[idx]
+    def __getitem__(self, index):
+        image = self.images[index]
+        mask = self.masks[index]
 
         return image, mask
 
@@ -32,11 +31,11 @@ class CustomDataset(Dataset):
                     if file.endswith('.jpg'):
                         # Load image
                         image_path = os.path.join(self.data_dir, city, cp, 'images', file)
-                        image = helpers.process_img(image_path, ismask=False)
+                        image = helpers.process_img(image_path, type='image')
 
                         # Load corresponding mask
                         mask_path = os.path.join(self.data_dir, city, cp, 'masks', file)
-                        mask = helpers.process_img(mask_path, ismask=True)
+                        mask = helpers.process_img(mask_path, type='mask')
 
                         # Append image and mask
                         images.append(image)

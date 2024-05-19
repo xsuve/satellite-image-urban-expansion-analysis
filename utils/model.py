@@ -1,16 +1,17 @@
+import cv2
 import numpy as np
 import torch
 import torch.nn as nn
 import torch.optim as optim
 from datetime import datetime
 from torch.utils.data import DataLoader
-from model.CustomDataset import CustomDataset
+from models.CustomDataset import CustomDataset
 import utils.helpers as helpers
 import time
 
 
 def train(model, data_dir, train_cities, output_dir, device, batch_size, num_epochs):
-    criterion = nn.CrossEntropyLoss()
+    criterion = nn.BCEWithLogitsLoss()
     optimizer = optim.Adam(model.parameters(), lr=0.001)
 
     # Load dataset
@@ -20,30 +21,32 @@ def train(model, data_dir, train_cities, output_dir, device, batch_size, num_epo
     # Training
     start = time.time()
     for epoch in range(num_epochs):
+        model.train()
         epoch_loss = 0.0
-        for images, masks in data_loader:
-            images = images.to(device)
-            masks = masks.to(device)
+        for image, mask in data_loader:
+            image = image.to(device)
+            mask = mask.to(device)
 
             # Zero the parameter gradients
             optimizer.zero_grad()
 
             # Forward pass
-            outputs = model(images)
+            pred = model(image)
 
             # Calculate loss
-            loss = criterion(outputs, masks)
+            loss = criterion(pred, mask.float())
+            epoch_loss += loss.item()
 
             # Backward pass and optimize
             loss.backward()
             optimizer.step()
 
-            epoch_loss += loss.item()
+        epoch_loss = epoch_loss / len(data_loader)
 
         now = time.time()
         print(f""
               f"Epoch: {epoch + 1}/{num_epochs} | "
-              f"Loss: {epoch_loss / len(data_loader)} | "
+              f"Loss: {epoch_loss:.5f} | "
               f"Time elapsed: {helpers.format_elapsed_time(now - start)}"
               )
 
@@ -51,7 +54,7 @@ def train(model, data_dir, train_cities, output_dir, device, batch_size, num_epo
     end = time.time()
     print(f"Total time elapsed: {helpers.format_elapsed_time(end - start)}")
 
-    # Save models file
+    # Save model file
     current_time = datetime.now()
     formatted_time = current_time.strftime('%d-%m-%Y_%H-%M-%S')
     trained_model_file = output_dir + formatted_time + '.pth'
@@ -61,21 +64,20 @@ def train(model, data_dir, train_cities, output_dir, device, batch_size, num_epo
     return trained_model_file
 
 
-def segment(model, model_file, test_img):
+def segment(model, model_file, device, image):
     model.load_state_dict(torch.load(model_file))
     model.eval()
 
-    test_img = helpers.process_img(test_img, ismask=False)
+    image = helpers.process_img(image, type='image').unsqueeze(0).to(device)
 
     with torch.no_grad():
-        output = model(test_img.unsqueeze(0))
+        pred = model(image)
 
-    output = torch.softmax(output, dim=2)
-    _, predicted_class = torch.max(output, dim=1)
-    predicted_class = predicted_class.squeeze().cpu().numpy()
+    pred = torch.argmin(pred, dim=1).squeeze(0).cpu().numpy()
 
-    colored_output = np.zeros((predicted_class.shape[0], predicted_class.shape[1], 3), dtype=np.uint8)
-    for class_label, color in helpers.LABEL_COLORS.items():
-        colored_output[predicted_class == class_label] = color
+    colored_output = np.empty((pred.shape[0], pred.shape[1], 3), dtype=np.uint8)
+    for label, color_rgb in helpers.LABEL_COLORS.items():
+        color_bgr = color_rgb[::-1]
+        colored_output[pred == label] = color_bgr
 
     return colored_output
