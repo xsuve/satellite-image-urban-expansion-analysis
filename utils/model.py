@@ -64,20 +64,25 @@ def train(model, data_dir, train_cities, output_dir, device, batch_size, num_epo
     return trained_model_file
 
 
-def segment(model, model_file, device, image):
+def segment(model, model_file, device, image_path):
     model.load_state_dict(torch.load(model_file))
     model.eval()
 
-    image = helpers.process_img(image, type='image').unsqueeze(0).to(device)
+    image = cv2.imread(str(image_path), cv2.IMREAD_COLOR)
+    image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+    image = np.array(image)
+    image = image / 255.0
+    image = np.transpose(image, (2, 0, 1))
+    image = image.astype(np.float32)
+    image = torch.from_numpy(image)
+
+    image = image.unsqueeze(0).to(device)
 
     with torch.no_grad():
         pred = model(image)
 
-    pred = torch.argmin(pred, dim=1).squeeze(0).cpu().numpy()
+    pred = torch.argmax(pred, dim=1).squeeze(0).cpu().numpy()
 
-    colored_output = np.empty((pred.shape[0], pred.shape[1], 3), dtype=np.uint8)
-    for label, color_rgb in helpers.LABEL_COLORS.items():
-        color_bgr = color_rgb[::-1]
-        colored_output[pred == label] = color_bgr
+    output = helpers.labels2mask(pred)
 
-    return colored_output
+    return output

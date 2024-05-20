@@ -1,8 +1,8 @@
 import cv2
-import os
 import numpy as np
-import torch
 import matplotlib.pyplot as plt
+from patchify import patchify
+
 plt.rcParams['toolbar'] = 'None'
 
 
@@ -15,29 +15,24 @@ LABEL_COLORS = {
 }
 
 
-def process_img(image_path, type):
-    image = cv2.imread(image_path, cv2.IMREAD_COLOR)  # (128, 128, 3)
-    image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+def mask2labels(mask):
+    labels = np.zeros(
+        (mask.shape[0], mask.shape[1], len(LABEL_COLORS.keys())),
+        dtype=np.uint8
+    )  # (128, 128, 2)
+    for label, color in LABEL_COLORS.items():
+        labels[(mask == color).all(axis=-1)] = label
 
-    if type == 'image':
-        # cv2.imshow('Image', image)
-        # cv2.waitKey(0)
-        image = image / 255.0
-        image = np.transpose(image, (2, 0, 1))  # (3, 128, 128)
-        image = image.astype(np.float32)
-        image = torch.from_numpy(image)
-    else:
-        # cv2.imshow('Mask', np.array(image))
-        # cv2.waitKey(0)
-        label_mask = np.zeros((image.shape[0], image.shape[1], len(LABEL_COLORS.keys())), dtype=np.uint8)  # (128, 128, 2)
-        for label, color in LABEL_COLORS.items():
-            label_mask[(image == color).all(axis=-1)] = label
-        label_mask = np.transpose(label_mask, (2, 0, 1))  # (2, 128, 128)
-        label_mask = label_mask.astype(np.uint8)
-        image = torch.from_numpy(label_mask)
-        # count = image.flatten().tolist().count(1)
+    return labels
 
-    return image
+
+def labels2mask(labels):
+    mask = np.empty((labels.shape[0], labels.shape[1], 3), dtype=np.uint8)
+    for label, color_rgb in LABEL_COLORS.items():
+        color_bgr = color_rgb[::-1]
+        mask[labels == label] = color_bgr
+
+    return mask
 
 
 def show_results(img_path, img_mask_path, segmented):
@@ -72,16 +67,17 @@ def format_elapsed_time(seconds):
     return f"{hours}h {minutes}min"
 
 
-def rename_files(from_dir, to_dir):
-    for _, filename in enumerate(os.listdir(from_dir)):
-        if filename.startswith("img_"):
-            file_index = int(filename[filename.find('_')+len('_'):filename.rfind('.')])
+def get_image_patches(image_path, patch_size=128):
+    patches = []
 
-            if file_index < 10:
-                os.rename(from_dir + filename, to_dir + '000' + str(file_index) + '.jpg')
-            elif 10 <= file_index < 100:
-                os.rename(from_dir + filename, to_dir + '00' + str(file_index) + '.jpg')
-            elif 100 <= file_index < 1000:
-                os.rename(from_dir + filename, to_dir + '0' + str(file_index) + '.jpg')
-            else:
-                os.rename(from_dir + filename, to_dir + str(file_index) + '.jpg')
+    image = cv2.imread(str(image_path), cv2.IMREAD_COLOR)  # (1024, 1920, 3)
+    image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+    image = np.array(image)
+    image_patches = patchify(image, (patch_size, patch_size, 3), step=patch_size)
+    for i in range(image_patches.shape[0]):
+        for j in range(image_patches.shape[1]):
+            image_patch = image_patches[i, j, :, :]  # (1, 128, 128, 3)
+            image_patch = image_patch.squeeze(0)  # (128, 128, 3)
+            patches.append(image_patch)
+
+    return patches

@@ -5,49 +5,21 @@ import utils.model as model
 
 '''
     Google Earth Pro:
-        - 1280x720 (720 HD)
-        - Free view scale: 9.96 km
-        - Image scale: 10 km
-    
-    Adobe Illustrator:
-        - Crop: 512x512
-    
-    Cities:
-        001 - SB
-        002 - AB
-        003 - CJ
-        004 - BV
-        005 - IS
-        006 - DJ
-        007 - TM
-        008 - PH
-        009 - MS
-        010 - B
-        011 - BR
-        012 - GL
-        013 - TL
-        014 - BZ
-        015 - VL
-        016 - OT
-        017 - MH
-        018 - AR
-        019 - BH
-        020 - BN
-        021 - HD
-'''
-
-'''
-    07/2022
-    1920x1080
-    1052m
+        07/2022
+        1920x1080 -> Crop to 1920x1024
+        1052m
 '''
 
 if __name__ == '__main__':
-    # helpers.rename_files('data/SB/S/m/', 'data/SB/S/masks/')
-
-    train_cities = {
-        'SB': ['S']
-    }
+    train_cities = [
+        {
+            'code': 'SB',
+            'images': [
+                'S_07-2022.jpg',
+                # 'N_07-2022.jpg'
+            ]
+        }
+    ]
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     num_classes = len(helpers.LABEL_COLORS.keys())
@@ -63,17 +35,15 @@ if __name__ == '__main__':
             'output/',
             device,
             2,
-            10
+            2
         )
     else:
-        # img_path = 'data/SB/S/images/0120.jpg'
-        # img_mask_path = 'data/SB/S/masks/0120.jpg'
-        img_path = 'data/SB/S/S.jpg'
-        img_mask_path = 'data/SB/S/S-mask.jpg'
+        img_path = 'data/SB/images/N_07-2022.jpg'
+        img_mask_path = 'data/SB/images/N_07-2022.jpg'
 
         segmented = model.segment(
             unet,
-            'output/19-05-2024_14-25-03.pth',
+            'output/20-05-2024_14-09-24.pth',
             device,
             img_path
         )
