@@ -57,7 +57,7 @@ def train(model, data_dir, train_cities, output_dir, device, batch_size, num_epo
     # Save model file
     current_time = datetime.now()
     formatted_time = current_time.strftime('%d-%m-%Y_%H-%M-%S')
-    trained_model_file = output_dir + formatted_time + '.pth'
+    trained_model_file = output_dir + formatted_time + '_' + str(batch_size) + '-' + str(num_epochs) + '.pth'
     torch.save(model.state_dict(), trained_model_file)
     print(f"Model saved to {trained_model_file}")
 

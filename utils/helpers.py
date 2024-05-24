@@ -15,13 +15,20 @@ LABEL_COLORS = {
 }
 
 
+def color_between(color1, color2, threshold):
+    return all(abs(c1 - c2) <= threshold for c1, c2 in zip(color1, color2))
+
+
 def mask2labels(mask):
     labels = np.zeros(
         (mask.shape[0], mask.shape[1], len(LABEL_COLORS.keys())),
         dtype=np.uint8
     )  # (128, 128, 2)
     for label, color in LABEL_COLORS.items():
-        labels[(mask == color).all(axis=-1)] = label
+        for i in range(mask.shape[0]):
+            for j in range(mask.shape[1]):
+                if color_between(mask[i, j], color, 10):
+                    labels[i, j, label] = 1
 
     return labels
 
@@ -36,7 +43,7 @@ def labels2mask(labels):
 
 
 def show_results(img_path, img_mask_path, segmented):
-    fig, axes = plt.subplots(1, 3, figsize=(15, 5))  # Create a figure with 1 row and 3 columns
+    fig, axes = plt.subplots(1, 3, figsize=(15, 5))
 
     img = cv2.imread(img_path, cv2.IMREAD_COLOR)
     img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
@@ -56,7 +63,6 @@ def show_results(img_path, img_mask_path, segmented):
         ax.axis('off')
 
     plt.tight_layout()
-
     plt.show()
 
 
