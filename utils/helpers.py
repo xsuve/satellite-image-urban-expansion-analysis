@@ -2,6 +2,7 @@ import cv2
 import numpy as np
 import matplotlib.pyplot as plt
 from patchify import patchify
+import utils.metrics as metrics
 
 plt.rcParams['toolbar'] = 'None'
 
@@ -58,6 +59,13 @@ def show_results(img_path, img_mask_path, segmented):
     segmented = cv2.cvtColor(segmented, cv2.COLOR_BGR2RGB)
     axes[2].imshow(segmented)
     axes[2].set_title('Segmented')
+
+    # Metrics
+    acc = metrics.accuracy(segmented, test_img_mask)
+    iou = metrics.intersection_over_union(segmented, test_img_mask)
+    dice = metrics.dice_coefficient(segmented, test_img_mask)
+    metrics_text = f"Accuracy: {acc:.2f}%\nIoU: {iou:.5f}\nDice: {dice:.5f}"
+    fig.text(0.5, 0.05, metrics_text, ha='center', fontsize=10, linespacing=1.5)
 
     for ax in axes:
         ax.axis('off')
