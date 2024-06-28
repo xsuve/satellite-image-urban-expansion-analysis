@@ -30,11 +30,11 @@ if __name__ == '__main__':
     num_classes = len(helpers.LABEL_COLORS.keys())
     unet = UNet(in_c=3, num_classes=num_classes).to(device)
 
-    # phase = 'train'
+    phase = 'train'
     # phase = 'segment'
-    phase = 'analyse'
-    BATCH_SIZE = 2
-    NUM_EPOCH = 10
+    # phase = 'analyse'
+    BATCH_SIZE = 1
+    NUM_EPOCH = 2
 
     if phase == 'train':
         model.train(
@@ -52,7 +52,7 @@ if __name__ == '__main__':
 
         segmented = model.segment(
             unet,
-            'output/23-05-2024_23-09-28_1-3.pth',
+            'output/07-06-2024_11-53-18_1-3.pth',
             device,
             img_path
         )

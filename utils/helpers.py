@@ -11,8 +11,6 @@ LABEL_COLORS = {
     # RGB
     0: [140, 212, 126],  # LAND
     1: [248, 213, 109],  # BUILDINGS
-    # 2: [76, 181, 255],  # MEDIUM DENSITY
-    # 3: [97, 105, 255],  # HIGH DENSITY
 }
 
 
@@ -62,9 +60,11 @@ def show_results(img_path, img_mask_path, segmented):
 
     # Metrics
     acc = metrics.accuracy(segmented, test_img_mask)
+    prec = metrics.precision(segmented, test_img_mask)
+    rec = metrics.recall(segmented, test_img_mask)
     iou = metrics.intersection_over_union(segmented, test_img_mask)
     dice = metrics.dice_coefficient(segmented, test_img_mask)
-    metrics_text = f"Accuracy: {acc:.2f}%\nIoU: {iou:.5f}\nDice: {dice:.5f}"
+    metrics_text = f"Accuracy: {acc:.2f}%\nPrecision: {prec:.5f}\nRecall: {rec:.5f}\nIoU: {iou:.5f}\nDice: {dice:.5f}"
     fig.text(0.5, 0.05, metrics_text, ha='center', fontsize=10, linespacing=1.5)
 
     for ax in axes:

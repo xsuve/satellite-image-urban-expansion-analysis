@@ -10,8 +10,24 @@ import utils.helpers as helpers
 import time
 
 
+class DiceLoss(nn.Module):
+    def __init__(self, smooth=1.0):
+        super(DiceLoss, self).__init__()
+        self.smooth = smooth
+
+    def forward(self, prediction, mask):
+        prediction = prediction.view(-1)
+        mask = mask.view(-1)
+
+        intersection = (prediction * mask).sum()
+        dice_coeff = (2. * intersection + self.smooth) / (prediction.sum() + mask.sum() + self.smooth)
+
+        return 1 - dice_coeff
+
+
 def train(model, data_dir, train_cities, output_dir, device, batch_size, num_epochs):
-    criterion = nn.BCEWithLogitsLoss()
+    # criterion = nn.BCEWithLogitsLoss()
+    dice_loss = DiceLoss()
     optimizer = optim.Adam(model.parameters(), lr=0.001)
 
     # Load dataset
@@ -22,7 +38,7 @@ def train(model, data_dir, train_cities, output_dir, device, batch_size, num_epo
     start = time.time()
     for epoch in range(num_epochs):
         model.train()
-        epoch_loss = 0.0
+        running_loss = 0.0
         for image, mask in data_loader:
             image = image.to(device)
             mask = mask.to(device)
@@ -34,14 +50,15 @@ def train(model, data_dir, train_cities, output_dir, device, batch_size, num_epo
             pred = model(image)
 
             # Calculate loss
-            loss = criterion(pred, mask.float())
-            epoch_loss += loss.item()
+            loss = dice_loss(pred, mask)
 
             # Backward pass and optimize
             loss.backward()
             optimizer.step()
 
-        epoch_loss = epoch_loss / len(data_loader)
+            running_loss += loss.item()
+
+        epoch_loss = running_loss / len(data_loader)
 
         now = time.time()
         print(f""
