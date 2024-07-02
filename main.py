@@ -30,11 +30,11 @@ if __name__ == '__main__':
     num_classes = len(helpers.LABEL_COLORS.keys())
     unet = UNet(in_c=3, num_classes=num_classes).to(device)
 
-    phase = 'train'
+    # phase = 'train'
     # phase = 'segment'
-    # phase = 'analyse'
-    BATCH_SIZE = 1
-    NUM_EPOCH = 2
+    phase = 'analyse'
+    BATCH_SIZE = 2
+    NUM_EPOCH = 5
 
     if phase == 'train':
         model.train(
@@ -63,17 +63,29 @@ if __name__ == '__main__':
             segmented
         )
     else:
+        # city = 'SB'
+        # timelapse = [
+        #     {'year': 2011, 'image': 'S_05-2011.jpg'},
+        #     # {'year': 2013, 'image': 'S_04-2013.jpg'},
+        #     # {'year': 2015, 'image': 'S_06-2015.jpg'},
+        #     # {'year': 2018, 'image': 'S_04-2018.jpg'},
+        #     # {'year': 2021, 'image': 'S_02-2021.jpg'},
+        #     {'year': 2022, 'image': 'S_10-2022.jpg'}
+        # ]
+
+        city = 'CJ'
+        # timelapse = [
+        #     {'year': 2009, 'image': 'SW_09-2009.jpg'},
+        #     {'year': 2022, 'image': 'SW_10-2022.jpg'},
+        # ]
+
         timelapse = [
-            {'year': 2011, 'image': 'S_05-2011.jpg'},
-            # {'year': 2013, 'image': 'S_04-2013.jpg'},
-            # {'year': 2015, 'image': 'S_06-2015.jpg'},
-            # {'year': 2018, 'image': 'S_04-2018.jpg'},
-            # {'year': 2021, 'image': 'S_02-2021.jpg'},
-            {'year': 2022, 'image': 'S_10-2022.jpg'}
+            {'year': 2009, 'image': 'F_09-2009.jpg'},
+            {'year': 2022, 'image': 'F_10-2022.jpg'},
         ]
 
         for item in timelapse:
-            img_path = 'data/SB/images/' + item['image']
+            img_path = 'data/' + city + '/images/' + item['image']
 
             segmented = model.segment(
                 unet,
